@@ -1,3 +1,12 @@
+// Lanzar error si faltan variables de entorno críticas
+if (
+  !process.env.FIREBASE_PROJECT_ID ||
+  !process.env.FIREBASE_PRIVATE_KEY ||
+  !process.env.FIREBASE_CLIENT_EMAIL ||
+  !process.env.ADMIN_MASTER_PASSWORD
+) {
+  throw new Error("Faltan variables de entorno para Firebase Admin o ADMIN_MASTER_PASSWORD");
+}
 import { NextRequest, NextResponse } from "next/server";
 import * as admin from "firebase-admin";
 
