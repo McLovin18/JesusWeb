@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { getBlogById } from "@/lib/blogs-db";
+import { obtenerBlogPorId } from "@/lib/blogs-db";
 import type { Blog } from "@/types/blog";
 import { BlogPreview } from "@/components/Window/BlogPreview";
 
@@ -15,7 +15,7 @@ export default function AdminBlogDetailPage() {
     async function load() {
       if (!params?.id) return;
       setLoading(true);
-      const data = await getBlogById(params.id as string);
+      const data = await obtenerBlogPorId(params.id as string);
       setBlog(data);
       setLoading(false);
     }
