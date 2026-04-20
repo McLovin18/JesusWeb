@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { getBlogById } from "@/lib/blogs-db";
 import type { Blog } from "@/types/blog";
-import BlogPreview from "../../../blogs/BlogPreview";
+import { BlogPreview } from "@/components/Window/BlogPreview";
 
 export default function AdminBlogDetailPage() {
   const params = useParams<{ id: string }>();

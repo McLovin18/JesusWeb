@@ -17,8 +17,7 @@ export default function Sidebar({ role = "client" }: SidebarProps) {
     { label: "Dashboard", icon: "📊", href: "/admin" },
     { label: "Inventario", icon: "📦", href: "/admin/inventario" },
     { label: "Blogs", icon: "📝", href: "/admin/blogs" },
-    { label: "Órdenes", icon: "🛒", href: "/admin/ordenes" },
-    { label: "Usuarios", icon: "👥", href: "/admin/usuarios" },
+    { label: "Reseñas", icon: "⭐", href: "/admin/reviews" },
   ];
 
   const menuItems = role === "admin" ? adminMenuItems : [];

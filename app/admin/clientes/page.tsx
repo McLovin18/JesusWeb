@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Loading3DIcon } from "../../components/Loading3DIcon";
+import { Loading3DIcon } from "@/components/Loading3DIcon";
 
 type Cliente = {
 	uid: string;

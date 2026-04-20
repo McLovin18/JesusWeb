@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { obtenerProductos, Producto } from "@/lib/productos-db";
+import { obtenerBlogsAdmin } from "@/lib/blogs-db";
 import { Loading3DIcon } from "@/components/Loading3DIcon";
 import { useUser } from "@/context/UserContext";
 
@@ -14,9 +15,11 @@ export default function AdminPage() {
 	const [stats, setStats] = useState<{
 		totalProductos: number;
 		productosSinStock: Producto[];
+		totalBlogs: number;
 	}>({
 		totalProductos: 0,
 		productosSinStock: [],
+		totalBlogs: 0,
 	});
 
 	useEffect(() => {
@@ -36,12 +39,15 @@ export default function AdminPage() {
 				// Si es admin, cargar datos
 				const productosRaw = await obtenerProductos({ incluirSinStock: true });
 				const productos = productosRaw as Producto[];
-
 				const productosSinStock = productos.filter((p) => Number(p.stock) === 0);
 
-				setStats({ 
-					totalProductos: productos.length, 
-					productosSinStock 
+				// Obtener blogs
+				const blogs = await obtenerBlogsAdmin();
+
+				setStats({
+					totalProductos: productos.length,
+					productosSinStock,
+					totalBlogs: blogs.length,
 				});
 			} catch (e) {
 				console.error("Error:", e);
@@ -130,27 +136,16 @@ export default function AdminPage() {
 								</p>
 							</div>
 
-							{/* Placeholder Cards */}
+							{/* Blogs Card */}
 							<div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm hover:shadow-md transition-shadow">
 								<div className="flex items-start justify-between mb-4">
 									<div className="text-3xl">📝</div>
 									<span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-										Pronto
+										Activos
 									</span>
 								</div>
 								<p className="text-slate-600 dark:text-slate-400 text-sm mb-1">Blogs</p>
-								<p className="text-2xl font-bold text-slate-900 dark:text-white">—</p>
-							</div>
-
-							<div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm hover:shadow-md transition-shadow">
-								<div className="flex items-start justify-between mb-4">
-									<div className="text-3xl">📊</div>
-									<span className="text-xs font-semibold px-2 py-1 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-										Pronto
-									</span>
-								</div>
-								<p className="text-slate-600 dark:text-slate-400 text-sm mb-1">Reportes</p>
-								<p className="text-2xl font-bold text-slate-900 dark:text-white">—</p>
+								<p className="text-2xl font-bold text-slate-900 dark:text-white">{stats.totalBlogs}</p>
 							</div>
 						</div>
 
@@ -185,12 +180,9 @@ export default function AdminPage() {
 							</h2>
 							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 								{[
-									{ label: "Productos", desc: "Gestionar inventario", href: "/admin/productos", icon: "🛍️" },
-									{ label: "Categorías", desc: "Organizar categorías", href: "/admin/categorias", icon: "📂" },
+									{ label: "Productos", desc: "Gestionar inventario", href: "/admin/inventario", icon: "🛍️" },
 									{ label: "Blogs", desc: "Crear y editar contenido", href: "/admin/blogs", icon: "📝" },
-									{ label: "Usuarios", desc: "Gestionar usuarios", href: "/admin/usuarios", icon: "👥" },
-									{ label: "Órdenes", desc: "Ver órdenes de clientes", href: "/admin/ordenes", icon: "📦" },
-									{ label: "Configuración", desc: "Ajustes del sistema", href: "/admin/configuracion", icon: "⚙️" },
+									{ label: "Reseñas", desc: "Aprobar/Rechazar reseñas", href: "/admin/reviews", icon: "⭐" },
 								].map((item) => (
 									<a
 										key={item.href}

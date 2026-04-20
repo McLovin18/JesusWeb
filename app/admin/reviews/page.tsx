@@ -13,14 +13,28 @@ export default function AdminReviewsPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authLoading) {
-      if (!isAdmin) {
-        router.push("/admin-login");
-        return;
+    let didCancel = false;
+    async function checkAndFetch() {
+      if (authLoading) return;
+      if (user) {
+        try {
+          await user.getIdToken(true);
+        } catch (e) {
+          console.error("Error refrescando token:", e);
+        }
       }
-      fetchPending();
+      // Esperar a que isAdmin esté evaluado
+      if (!didCancel) {
+        if (isAdmin) {
+          fetchPending();
+        } else if (!authLoading && !isAdmin) {
+          router.push("/admin-login");
+        }
+      }
     }
-  }, [authLoading, isAdmin]);
+    checkAndFetch();
+    return () => { didCancel = true; };
+  }, [authLoading, isAdmin, user]);
 
   async function getToken(): Promise<string | null> {
     if (!user) return null;

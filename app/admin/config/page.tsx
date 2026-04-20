@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { themeManager, themes } from "../../components/themeManager";
+import { themeManager, themes } from "@/components/themeManager";
 import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 
 export default function ConfigPage() {

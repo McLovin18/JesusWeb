@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { obtenerProductoPorId, obtenerProductosPorCategoria, obtenerProductosPorSubcategoria, obtenerProductosPorSubsubcategoria, Producto } from '@/lib/productos-db';
+import { collection, query, where, orderBy, onSnapshot, Unsubscribe } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { obtenerProductoPorId, obtenerProductosPorCategoria, Producto } from '@/lib/productos-db';
 import { useUser } from '@/context/UserContext';
 import { useToast } from '@/context/ToastContext';
 import { ProductReview } from '@/lib/reviews-types';
@@ -38,15 +40,25 @@ export default function ProductDetail({ productId, onClose }: ProductDetailProps
   const { isLogged, user, favoritos, addFavorito, removeFavorito, carrito, addCarrito, removeCarrito } = useUser();
   const { showToast } = useToast();
 
-  // Fetch producto y reviews
+  // Fetch producto y escucha en tiempo real de reseñas
   useEffect(() => {
-    async function fetchProducto() {
+    let unsubscribeReviews: Unsubscribe | null = null;
+    async function fetchProductoYEscuchar() {
       try {
         setLoading(true);
         const prod = await obtenerProductoPorId(productId);
         setProducto(prod);
         if (prod) {
-          await fetchReviews(prod.id);
+          // Escuchar reseñas aprobadas en tiempo real
+          const q = query(
+            collection(db, 'resenas'),
+            where('productId', '==', prod.id),
+            where('status', '==', 'approved'),
+            orderBy('createdAt', 'desc')
+          );
+          unsubscribeReviews = onSnapshot(q, (snapshot) => {
+            setReviews(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as ProductReview[]);
+          });
           await fetchRelacionados(prod);
         }
       } catch (error) {
@@ -56,7 +68,10 @@ export default function ProductDetail({ productId, onClose }: ProductDetailProps
         setLoading(false);
       }
     }
-    fetchProducto();
+    fetchProductoYEscuchar();
+    return () => {
+      if (unsubscribeReviews) unsubscribeReviews();
+    };
   }, [productId]);
 
   // Prefill user info
@@ -67,26 +82,20 @@ export default function ProductDetail({ productId, onClose }: ProductDetailProps
     }
   }, [isLogged, user]);
 
+  // fetchReviews ya no es necesario para mostrar reseñas, pero se usa tras enviar una nueva para forzar revalidación si es necesario
   async function fetchReviews(productId: string) {
-    try {
-      const res = await fetch(`/api/reviews/product?productId=${productId}`);
-      if (res.ok) setReviews(await res.json());
-    } catch (error) {
-      console.error('Error cargando reseñas:', error);
-    }
+    // Ya no se usa para mostrar reseñas, solo para compatibilidad tras submit
+    // Ahora las reseñas se actualizan en tiempo real
   }
 
   async function fetchRelacionados(prod: Producto) {
     try {
       let rel: Producto[] = [];
-      if (prod.subsubcategoria) {
-        rel = await obtenerProductosPorSubsubcategoria(prod.subsubcategoria, prod.id, 6);
-      }
-      if ((!rel || rel.length === 0) && prod.subcategoria) {
-        rel = await obtenerProductosPorSubcategoria(prod.subcategoria, prod.id, 6);
-      }
-      if ((!rel || rel.length === 0) && prod.categoria) {
-        rel = await obtenerProductosPorCategoria(prod.categoria, prod.id, 6);
+      if (prod.categoria) {
+        // obtenerProductosPorCategoria solo acepta 1 argumento
+        rel = await obtenerProductosPorCategoria(prod.categoria);
+        // Filtrar el producto actual
+        rel = rel.filter((p) => p.id !== prod.id).slice(0, 6);
       }
       setRelacionados(rel);
     } catch (error) {
@@ -134,7 +143,7 @@ export default function ProductDetail({ productId, onClose }: ProductDetailProps
           setReviewName('');
           setReviewEmail('');
         }
-        await fetchReviews(producto!.id);
+        // fetchReviews(producto!.id); // Ya no es necesario, onSnapshot actualiza automáticamente
         showToast('¡Gracias por tu reseña! Será revisada por el administrador.', 'success');
         
         // Desaparecer el mensaje después de 5 segundos
@@ -170,28 +179,30 @@ export default function ProductDetail({ productId, onClose }: ProductDetailProps
   }
 
   // Cálculos
-  const maxCantidad = producto.stock;
-  const isFav = favoritos?.some((p) => p.id === producto.id);
-  const inCart = carrito?.some((p) => p.id === producto.id);
-  const basePrice = Number(producto.precio || 0);
-  const discount = Number(producto.descuento || 0);
+  const maxCantidad = producto?.stock || 0;
+  const isFav = favoritos?.some((p) => p.id === producto?.id);
+  const inCart = carrito?.some((p) => p.id === producto?.id);
+  const basePrice = Number(producto?.precio || 0);
+  const discount = Number(producto?.descuento || 0);
   const hasDiscount = !isNaN(discount) && discount > 0 && discount < 100;
   const finalPrice = basePrice;
   const fakeOldPrice = hasDiscount ? Math.round(basePrice / (1 - discount / 100)) : null;
   const avgRating = reviews.length > 0 ? reviews.reduce((a, b) => a + b.rating, 0) / reviews.length : 0;
-  const hasCaracteristicas = producto.caracteristicas?.length > 0;
+  const hasCaracteristicas = Array.isArray(producto?.caracteristicas) && producto.caracteristicas.length > 0;
 
   const handleAddCart = () => {
+    if (!producto?.id) return;
     if (inCart) {
       removeCarrito(producto.id);
       showToast('Eliminado del carrito', 'info');
     } else {
       addCarrito({ ...producto, cantidad });
-      showToast(`${producto.nombre} añadido al carrito`, 'success');
+      showToast(`${producto?.nombre} añadido al carrito`, 'success');
     }
   };
 
   const handleFav = () => {
+    if (!producto?.id) return;
     isFav ? removeFavorito(producto.id) : addFavorito(producto);
   };
 
@@ -437,7 +448,7 @@ export default function ProductDetail({ productId, onClose }: ProductDetailProps
 
           {activeTab === 'caracteristicas' && hasCaracteristicas && (
             <ul className="space-y-2 text-xs">
-              {producto.caracteristicas.map((c, idx) => (
+              {producto?.caracteristicas?.map((c, idx) => (
                 <li key={idx} className="flex gap-2 text-slate-700 dark:text-white/80">
                   <span className="text-slate-300 dark:text-white/20 flex-shrink-0">›</span>
                   {c}
@@ -506,7 +517,14 @@ export default function ProductDetail({ productId, onClose }: ProductDetailProps
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Productos relacionados</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {relacionados.slice(0, 3).map((prod) => (
-              <ProductoCard key={prod.id} producto={prod} compact />
+              <ProductoCard
+                key={prod.id}
+                producto={prod}
+                compact
+                onClick={() => {}}
+                onAddCart={() => {}}
+                onEye={() => {}}
+              />
             ))}
           </div>
         </div>
