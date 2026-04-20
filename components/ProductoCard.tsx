@@ -8,6 +8,19 @@ import { useRouter } from "next/navigation";
 import { useTracking } from "../lib/useAnalytics";
 import { useToast } from "../context/ToastContext";
 
+import type { Producto } from "@/lib/productos-db";
+
+interface ProductoCardProps {
+  producto: Producto;
+  onClick?: () => void;
+  showCart?: boolean;
+  showEye?: boolean;
+  onAddCart?: (producto: Producto) => void;
+  onEye?: (producto: Producto) => void;
+  showFav?: boolean;
+  compact?: boolean;
+}
+
 function ProductoCard({
   producto,
   onClick,
@@ -17,10 +30,9 @@ function ProductoCard({
   onEye,
   showFav = false,
   compact = false,
-}) {
+}: ProductoCardProps) {
   const {
     isLogged,
-    isCliente,
     isAdmin,
     carrito,
     addCarrito,
@@ -49,11 +61,10 @@ function ProductoCard({
         detailUrl = `/home/product-detail?id=${producto.id}`;
       } else {
         if (isAdmin) detailUrl = `/admin/product-detail?id=${producto.id}`;
-        if (isCliente) detailUrl = `/home/product-detail?id=${producto.id}`;
+        // Si quieres lógica para clientes, agrega aquí un flag isCliente en el contexto si lo necesitas
       }
     } catch {
       if (isAdmin) detailUrl = `/admin/product-detail?id=${producto.id}`;
-      if (isCliente) detailUrl = `/home/product-detail?id=${producto.id}`;
     }
     return detailUrl;
   };
@@ -76,7 +87,7 @@ function ProductoCard({
       return; 
     }
     if (inCart) {
-      removeCarrito(producto.id);
+      if (producto.id) removeCarrito(producto.id);
       showToast("Eliminado del carrito", "info");
     } else {
       addCarrito({ ...producto, cantidad: 1 });

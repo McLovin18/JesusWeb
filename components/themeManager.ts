@@ -39,7 +39,11 @@ export const colors = {
   },
 };
 
-export const themes = {
+export type ThemeName = 'light' | 'dark';
+export type ThemeColors = {
+  [key: string]: string;
+};
+export const themes: Record<ThemeName, ThemeColors> = {
   light: {
     bg: colors.light.bg,
     bgSecondary: colors.light.bgSecondary,
@@ -106,9 +110,9 @@ export class ThemeManager {
         html.classList.remove('dark');
       }
       // Set CSS variables for theme colors
-      const themeColors = themes[finalTheme];
+      const themeColors: ThemeColors = themes[finalTheme as ThemeName];
       Object.entries(themeColors).forEach(([key, value]) => {
-        html.style.setProperty(`--${key}`, value);
+        html.style.setProperty(`--${key}`, String(value));
       });
     }
     this.setStoredTheme(theme);
@@ -129,7 +133,7 @@ export class ThemeManager {
     return this.currentTheme;
   }
   getThemeColors() {
-    return themes[this.currentTheme];
+    return themes[this.currentTheme as ThemeName];
   }
 }
 

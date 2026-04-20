@@ -149,7 +149,7 @@ export function TiendaWindowContent() {
             key={cat.id}
             onClick={() => {
               setView('categoria');
-              setSelectedCategoria(cat.id);
+              setSelectedCategoria(cat.id ?? null);
             }}
             style={{
               padding: '8px 12px',
@@ -249,8 +249,8 @@ export function TiendaWindowContent() {
                 <ProductoCard
                   key={producto.id}
                   producto={producto}
-                  onClick={() => setSelectedProductId(producto.id)}
-                  onEye={() => setSelectedProductId(producto.id)}
+                  onClick={() => setSelectedProductId(producto.id ?? null)}
+                  onEye={() => setSelectedProductId(producto.id ?? null)}
                   showCart={true}
                   showEye={true}
                   showFav={false}

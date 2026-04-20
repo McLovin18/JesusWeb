@@ -3,17 +3,18 @@ import React, { useEffect, useState } from "react";
 import { themeManager, themes } from "@/components/themeManager";
 import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 
+type ThemeName = keyof typeof themes;
 export default function ConfigPage() {
-  const [theme, setTheme] = useState("light");
+  const [theme, setTheme] = useState<ThemeName>("light");
 
   useEffect(() => {
-    setTheme(themeManager.getTheme());
-    const handler = (e) => setTheme(e.detail.theme);
+    setTheme(themeManager.getTheme() as ThemeName);
+    const handler = (e: Event) => setTheme(((e as CustomEvent).detail as any).theme as ThemeName);
     window.addEventListener("theme-changed", handler);
     return () => window.removeEventListener("theme-changed", handler);
   }, []);
 
-  const handleThemeChange = (t) => {
+  const handleThemeChange = (t: ThemeName) => {
     themeManager.applyTheme(t);
     setTheme(t);
   };
@@ -80,7 +81,7 @@ function ChangePasswordForm() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  const handleChangePassword = async (e) => {
+  const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMessage("");
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -109,7 +110,7 @@ function ChangePasswordForm() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (e) {
+    } catch (e: any) {
       setMessage("Error: " + (e.message || "No se pudo cambiar la contraseña"));
     }
     setLoading(false);

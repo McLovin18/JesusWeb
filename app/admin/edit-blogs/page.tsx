@@ -5,7 +5,7 @@ import type {
 	Blog,
 	BlogBlock,
 	BlogBlockType,
-	BlogFieldStyle,
+	BlogBlockStyle,
 } from "@/types/blog";
 import {
 	obtenerBlogsAdmin,
@@ -56,6 +56,7 @@ export default function AdminEditBlogsPage() {
 	const [uploadingBlockId, setUploadingBlockId] = useState<string | null>(null);
 	const [draggedBlockIndex, setDraggedBlockIndex] = useState<number | null>(null);
 	const [draggedBlogIndex, setDraggedBlogIndex] = useState<number | null>(null);
+	const [categorias, setCategorias] = useState<any[]>([]); // Ajusta el tipo si tienes una interfaz Categoria
 
 	useEffect(() => {
 		async function load() {
@@ -63,7 +64,7 @@ export default function AdminEditBlogsPage() {
 			const all = await obtenerBlogsAdmin();
 			setBlogs(all);
 			if (all.length > 0) {
-				setSelectedId(all[0].id);
+				setSelectedId(all[0].id ?? null);
 				setEditingBlog(all[0]);
 			} else {
 				setSelectedId(null);
@@ -75,7 +76,7 @@ export default function AdminEditBlogsPage() {
 	}, []);
 
 	const handleSelectBlog = (blog: Blog) => {
-		setSelectedId(blog.id);
+		setSelectedId(blog.id ?? null);
 		setEditingBlog(blog);
 	};
 
@@ -231,7 +232,7 @@ export default function AdminEditBlogsPage() {
 
 	const updateBlockStyle = (
 		index: number,
-		key: keyof BlogFieldStyle,
+				key: keyof BlogBlockStyle,
 		value: string
 	) => {
 		updateBlock(index, (block) => ({
@@ -271,7 +272,7 @@ export default function AdminEditBlogsPage() {
 		setBlogs(remaining);
 		if (selectedId === id) {
 			if (remaining.length > 0) {
-				setSelectedId(remaining[0].id);
+				setSelectedId(remaining[0].id ?? null);
 				setEditingBlog(remaining[0]);
 			} else {
 				setSelectedId(null);
@@ -312,7 +313,7 @@ export default function AdminEditBlogsPage() {
 			return [saved, ...prev];
 		});
 
-		setSelectedId(saved.id);
+				setSelectedId(saved.id ?? null);
 		setEditingBlog(saved);
 		setSaving(false);
 	};
@@ -440,7 +441,7 @@ export default function AdminEditBlogsPage() {
 											<button
 												onClick={(e) => {
 													e.stopPropagation();
-													handleDeleteBlog(b.id);
+													if (b.id) handleDeleteBlog(b.id);
 												}}
 												className="ml-3 text-xs text-red-500 hover:text-red-600"
 											>
@@ -941,7 +942,7 @@ export default function AdminEditBlogsPage() {
 
 						<div className="flex-1 overflow-auto py-2">
 							{previewBlog ? (
-								<BlogPreview blog={previewBlog} device={previewDevice} />
+																 <BlogPreview blog={previewBlog} />
 							) : (
 								<p className="text-xs text-slate-500 dark:text-slate-400">
 									Crea o selecciona un blog para ver la previsualización.
@@ -1001,7 +1002,7 @@ export default function AdminEditBlogsPage() {
 							</div>
 						</div>
 						<div className="flex-1 overflow-auto px-4 py-4">
-							<BlogPreview blog={previewBlog} device={previewDevice} />
+														<BlogPreview blog={previewBlog} />
 						</div>
 					</div>
 				</div>

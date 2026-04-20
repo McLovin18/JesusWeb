@@ -28,6 +28,7 @@ export interface Producto {
   descripcion: string;
   caracteristicas?: string[];
   bodegaId?: string;
+  destacado?: boolean;
   createdAt?: number;
   updatedAt?: number;
 }

@@ -254,12 +254,6 @@ export default function AdminReviewsPage() {
                       </div>
                     </div>
 
-                    {/* Email si existe */}
-                    {r.userEmail && (
-                      <span className="text-xs text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded-lg">
-                        {r.userEmail}
-                      </span>
-                    )}
                   </div>
 
                   {/* Comentario */}

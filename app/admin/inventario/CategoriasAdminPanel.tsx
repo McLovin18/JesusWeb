@@ -86,6 +86,24 @@ function moveCategoria(categorias: Categoria[], sourcePath: number[], destPath: 
   return copy;
 }
 
+// Convierte recursivamente una categoria de Firestore a la definición local
+function mapCategoria(cat: any): Categoria {
+  return {
+    ...cat,
+    id: cat.id ?? '',
+    subcategorias: cat.subcategorias ? cat.subcategorias.map(mapCategoria) : [],
+  };
+}
+
+// Convierte recursivamente una categoria local a la estructura esperada por la base de datos
+function toDbCategoria(cat: any): import("@/lib/categorias-db").Categoria {
+  return {
+    ...cat,
+    orden: typeof cat.orden === 'number' ? cat.orden : 0,
+    subcategorias: cat.subcategorias ? cat.subcategorias.map(toDbCategoria) : [],
+  };
+}
+
 export default function CategoriasAdminPanel({ onCategoriasChange }: { onCategoriasChange?: (cats: Categoria[]) => void }) {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [nuevaCategoria, setNuevaCategoria] = useState("");
@@ -99,7 +117,7 @@ export default function CategoriasAdminPanel({ onCategoriasChange }: { onCategor
 
   // Cargar categorías desde Firestore
   useEffect(() => {
-    obtenerCategorias().then(cats => setCategorias(cats || []));
+    obtenerCategorias().then(cats => setCategorias((cats || []).map(mapCategoria)));
   }, []);
 
   // Notificar cambios
@@ -109,8 +127,15 @@ export default function CategoriasAdminPanel({ onCategoriasChange }: { onCategor
 
   const agregarCategoria = async () => {
     if (!nuevaCategoria.trim()) return;
-    const nueva: Categoria = { id: Date.now().toString(), nombre: nuevaCategoria, icono: nuevoIcono.trim() || undefined, orden: categorias.length, subcategorias: [] };
-    await crearCategoria(nueva);
+    // Aseguramos que 'orden' nunca sea undefined
+    const nueva: Categoria = {
+      id: Date.now().toString(),
+      nombre: nuevaCategoria,
+      icono: nuevoIcono.trim() || undefined,
+      orden: typeof categorias.length === 'number' ? categorias.length : 0,
+      subcategorias: [],
+    };
+    await crearCategoria(toDbCategoria(nueva));
     setCategorias(prev => [...prev, nueva]);
     setNuevaCategoria("");
     setNuevoIcono("");
@@ -121,7 +146,7 @@ export default function CategoriasAdminPanel({ onCategoriasChange }: { onCategor
       await eliminarCategoria(cat.id);
       setCategorias(prev => prev.filter(c => c.id !== cat.id));
     } else {
-      let categoryToUpdate: Categoria | null = null;
+      let categoryToUpdate: any = null;
 
       setCategorias(prev => {
         const copy = JSON.parse(JSON.stringify(prev));
@@ -135,7 +160,7 @@ export default function CategoriasAdminPanel({ onCategoriasChange }: { onCategor
       });
 
       if (categoryToUpdate?.id) {
-        await actualizarCategoria(categoryToUpdate.id, categoryToUpdate);
+        await actualizarCategoria(categoryToUpdate.id, toDbCategoria(categoryToUpdate));
       }
     }
   };
@@ -163,15 +188,15 @@ export default function CategoriasAdminPanel({ onCategoriasChange }: { onCategor
       if (level === 1) {
         // Si reordena nivel 1, guardar ambos elementos movidos
         if (newCategorias[draggedPath.path[0]]?.id) {
-          await actualizarCategoria(newCategorias[draggedPath.path[0]].id, newCategorias[draggedPath.path[0]]);
+          await actualizarCategoria(newCategorias[draggedPath.path[0]].id, toDbCategoria(newCategorias[draggedPath.path[0]]));
         }
         if (newCategorias[path[0]]?.id) {
-          await actualizarCategoria(newCategorias[path[0]].id, newCategorias[path[0]]);
+          await actualizarCategoria(newCategorias[path[0]].id, toDbCategoria(newCategorias[path[0]]));
         }
       } else {
         // Si reordena nivel 2 o superior, guardar la categoría raíz con toda la estructura
         if (newCategorias[path[0]]?.id) {
-          await actualizarCategoria(newCategorias[path[0]].id, newCategorias[path[0]]);
+          await actualizarCategoria(newCategorias[path[0]].id, toDbCategoria(newCategorias[path[0]]));
         }
       }
     }
@@ -183,7 +208,7 @@ export default function CategoriasAdminPanel({ onCategoriasChange }: { onCategor
   const handleEditarNombre = async (path: number[], newName: string, level: number) => {
     if (!newName.trim()) return;
 
-    let updatedCategory: Categoria | null = null;
+    let updatedCategory: any = null;
 
     setCategorias(prev => {
       const copy = JSON.parse(JSON.stringify(prev)) as Categoria[];
@@ -205,7 +230,7 @@ export default function CategoriasAdminPanel({ onCategoriasChange }: { onCategor
 
     // Guardar en Firestore después de actualizar el estado
     if (updatedCategory?.id) {
-      await actualizarCategoria(updatedCategory.id, updatedCategory);
+      await actualizarCategoria(updatedCategory.id, toDbCategoria(updatedCategory));
     }
 
     setEditingPath(null);
@@ -328,7 +353,7 @@ export default function CategoriasAdminPanel({ onCategoriasChange }: { onCategor
                           });
                           setCategorias(newCat);
                           if (newCat[path[0]]?.id) {
-                            await actualizarCategoria(newCat[path[0]].id, newCat[path[0]]);
+                            await actualizarCategoria(newCat[path[0]].id, toDbCategoria(newCat[path[0]]));
                           }
                         }
                       }}

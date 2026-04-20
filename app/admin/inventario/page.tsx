@@ -4,7 +4,7 @@ import type { Producto } from "@/lib/productos-db";
 import CategoriasAdminPanel from "./CategoriasAdminPanel";
 import MarcasAdminPanel from "./MarcasAdminPanel";
 import BodegasAdminPanel from "./BodegasAdminPanel";
-import ProductoFormModal from "./ProductoFormModal";
+import ProductoFormModal from "@/components/ProductoFormModal";
 import ProductoCard from "@/components/ProductoCard";
 import {
   crearProducto,
@@ -47,7 +47,7 @@ export default function AdminInventario() {
   useEffect(() => {
     async function fetchProductos() {
       setLoading(true);
-      const prods = await obtenerProductos({ incluirSinStock: true });
+      const prods = await obtenerProductos();
       setProductos(prods);
       setLoading(false);
     }
@@ -197,7 +197,7 @@ export default function AdminInventario() {
                 className="flex-1 border border-slate-400 text-slate-700 font-semibold py-2 rounded-lg hover:bg-slate-100 transition"
                 onClick={async () => {
                   setLoading(true);
-                  const prods = await obtenerProductos({ incluirSinStock: true });
+                  const prods = await obtenerProductos();
                   setProductos(prods);
                   setLoading(false);
                 }}
@@ -236,12 +236,12 @@ export default function AdminInventario() {
                 setEditData(null);
               }}
               onSave={async (data) => {
-                if (editData) {
+                if (editData && editData.id) {
                   await actualizarProducto(editData.id, data);
                 } else {
                   await crearProducto({ ...data, destacado: false });
                 }
-                const prods = await obtenerProductos({ incluirSinStock: true });
+                const prods = await obtenerProductos();
                 setProductos(prods);
                 setShowForm(false);
                 setEditData(null);
@@ -286,9 +286,10 @@ export default function AdminInventario() {
                               type="checkbox"
                               checked={!!p.destacado}
                               onChange={async (e) => {
+                                if (!p.id) return;
                                 setLoading(true);
                                 await actualizarProducto(p.id, { destacado: e.target.checked });
-                                const prods = await obtenerProductos({ incluirSinStock: true });
+                                const prods = await obtenerProductos();
                                 setProductos(prods);
                                 setLoading(false);
                               }}

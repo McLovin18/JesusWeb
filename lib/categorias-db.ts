@@ -53,7 +53,7 @@ export const obtenerCategorias = async (): Promise<Categoria[]> => {
       query(collection(db, 'categorias'), orderBy('orden', 'asc'))
     );
     return snapshot.docs.map((doc) => ({
-      id: doc.id,
+      id: doc.id ?? '',
       ...doc.data(),
     })) as Categoria[];
   } catch (error) {

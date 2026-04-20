@@ -37,7 +37,7 @@ export default function AdminPage() {
 				}
 
 				// Si es admin, cargar datos
-				const productosRaw = await obtenerProductos({ incluirSinStock: true });
+				const productosRaw = await obtenerProductos();
 				const productos = productosRaw as Producto[];
 				const productosSinStock = productos.filter((p) => Number(p.stock) === 0);
 
