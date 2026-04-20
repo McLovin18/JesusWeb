@@ -1,0 +1,77 @@
+/* Dropdown menu for minimized windows */
+.minimizedMenu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 40px;
+  min-width: 280px;
+  background: var(--dropdown-bg);
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  padding: 8px;
+  z-index: 60;
+  backdrop-filter: blur(10px);
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.minimizedMenu.open {
+  display: block;
+}
+
+.minimizedItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  text-align: left;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.minimizedItem:hover {
+  background-color: var(--hover);
+  border-color: var(--accent);
+  transform: translateX(4px);
+}
+
+.miTitle {
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.minimizedItem:hover .miTitle {
+  color: var(--primary);
+}
+
+.miDesc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+}
+
+.minimizedEmpty {
+  padding: 16px;
+  color: var(--text-secondary);
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+

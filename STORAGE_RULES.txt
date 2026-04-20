@@ -1,0 +1,58 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ═══════════════════════════════════════════════════════════════
+    // PRODUCTOS Storage
+    // ═══════════════════════════════════════════════════════════════
+    // - Lectura: Pública (cualquiera puede ver imágenes)
+    // - Escritura: Solo admin
+    
+    match /productos/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // CATEGORIAS Storage
+    // ═══════════════════════════════════════════════════════════════
+    // - Lectura: Pública
+    // - Escritura: Solo admin
+    
+    match /categorias/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // BLOGS Storage
+    // ═══════════════════════════════════════════════════════════════
+    // - Lectura: Pública
+    // - Escritura: Solo admin
+    // - Almacena imágenes principales y de contenido
+    
+    match /blogs/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PERFIL Storage (Opcional - para fotos de perfil del usuario)
+    // ═══════════════════════════════════════════════════════════════
+    // - Lectura: Pública (para mostrar perfiles)
+    // - Escritura: Solo el usuario propietario
+    
+    match /profile_pictures/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Bloquear acceso a cualquier otro path
+    // ═══════════════════════════════════════════════════════════════
+    
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

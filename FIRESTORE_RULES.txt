@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+  
+    // ═══════════════════════════════════════════════════════════════
+    // Helper Functions
+    // ═══════════════════════════════════════════════════════════════
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // PRODUCTOS Collection
+    // ═══════════════════════════════════════════════════════════════
+    // - Lectura pública: Cualquiera puede ver productos
+    // - Escritura: Solo admin puede crear/editar/eliminar
+    
+    match /productos/{productId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // CATEGORIAS Collection
+    // ═══════════════════════════════════════════════════════════════
+    // - Lectura pública: Cualquiera puede ver categorías
+    // - Escritura: Solo admin
+    // - Soporta subcategorías recursivas
+    
+    match /categorias/{categoriaId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // BLOGS Collection
+    // ═══════════════════════════════════════════════════════════════
+    // - Lectura: Solo blogs publicados (o admin ve todos)
+    // - Escritura: Solo admin
+    // - Soporta contenido con bloques (paragraphs, subtitles, images)
+    
+    match /blogs/{blogId} {
+      allow read: if resource.data.publicado == true || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // USERS Collection (Opcional - para datos del usuario)
+    // ═══════════════════════════════════════════════════════════════
+    // - Cada usuario solo puede leer/escribir su propio documento
+    
+    match /users/{userId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // CARRITO Collection (Opcional - para guardar carrito del usuario)
+    // ═══════════════════════════════════════════════════════════════
+    // - Los usuarios autenticados pueden crear/leer/actualizar su carrito
+    // - Los invitados guardan el carrito en localStorage
+    
+    match /carrito/{carritoId} {
+      allow create: if isSignedIn();
+      allow read, update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ORDENES Collection (Opcional - para pedidos del carrito)
+    // ═══════════════════════════════════════════════════════════════
+    // - Cualquiera puede crear orden (invitado o usuario)
+    // - Usuarios pueden leer sus órdenes
+    // - Admin puede leer/actualizar todas las órdenes
+    
+    match /ordenes/{orderId} {
+      allow create: if true;
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Bloquear acceso a documentos no configurados
+    // ═══════════════════════════════════════════════════════════════
+    
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
