@@ -35,7 +35,7 @@ export default function AdminBlogDetailPage() {
               Artículo no encontrado.
             </div>
           ) : (
-            <BlogPreview blog={blog} device="desktop" />
+            <BlogPreview blog={blog} />
           )}
         </div>
       </div>
